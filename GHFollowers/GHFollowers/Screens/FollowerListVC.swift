@@ -8,20 +8,18 @@
 import UIKit
 
 class FollowerListVC: UIViewController {
-    
-    enum Section {
-         case main
-    }
-    
+    //MARK: - Enum
+    enum Section { case main }
+    //MARK: - Property
     var username: String!
     var foloowers: [Follower] = []
     var collectionView: UICollectionView!
     var dataSourse: UICollectionViewDiffableDataSource<Section, Follower>!
-
+    //MARK: - Life cycle view controller
     override func viewDidLoad() {
         super.viewDidLoad()
         configureCollectionView()
-        confugureViewController()
+        configureViewController()
         configureDataSourse()
         getFollowes()
     }
@@ -30,35 +28,30 @@ class FollowerListVC: UIViewController {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: true)
     }
-    
-    func confugureViewController() {
+    //MARK: - Configure func
+    func configureViewController() {
         view.backgroundColor = .systemBackground
         navigationController?.navigationBar.prefersLargeTitles = true
     }
     
     func configureCollectionView() {
-        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: createThreeColumnFlowLayout())
+        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: UIHelper.createThreeColumnFlowLayout(in: view))
         view.addSubview(collectionView)
         collectionView.backgroundColor = .systemBackground
         collectionView.register(FollowerCell.self, forCellWithReuseIdentifier: FollowerCell.reiseID)
     }
-    
-    func createThreeColumnFlowLayout() -> UICollectionViewFlowLayout {
-        let width = view.bounds.width
-        let padding: CGFloat = 10
-        let minimumItemSpacing: CGFloat = 12
-        let availableWidth = width - (padding * 2) - (minimumItemSpacing * 2)
-        let itemWidth = availableWidth / 3
         
-        let flowLayout = UICollectionViewFlowLayout()
-        flowLayout.sectionInset = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
-        flowLayout.itemSize = CGSize(width: itemWidth, height: itemWidth + 20)
-        
-        return flowLayout
+    func configureDataSourse() {
+        dataSourse = UICollectionViewDiffableDataSource<Section, Follower>(collectionView: collectionView, cellProvider: { (collectionView, indexPath, follower) -> UICollectionViewCell? in
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FollowerCell.reiseID, for: indexPath) as! FollowerCell
+            cell.set(follower: follower)
+            return cell
+        })
     }
-    
+    //MARK: - Data func
     func getFollowes() {
-        NetworkManager.shared.getFollowers(for: username, page: 1) { result in
+        NetworkManager.shared.getFollowers(for: username, page: 1) {[weak self] result in
+            guard let self = self else { return }
             switch result {
             case .success(let followers):
                 self.foloowers = followers
@@ -68,15 +61,6 @@ class FollowerListVC: UIViewController {
             }
         }
     }
-    
-    func configureDataSourse() {
-        dataSourse = UICollectionViewDiffableDataSource<Section, Follower>(collectionView: collectionView, cellProvider: { (collectionView, indexPath, follower) -> UICollectionViewCell? in
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: FollowerCell.reiseID, for: indexPath) as! FollowerCell
-            cell.set(follower: follower)
-            return cell
-        })
-    }
-    
     func updateData() {
         var snapshot = NSDiffableDataSourceSnapshot<Section, Follower>()
         snapshot.appendSections([.main])
