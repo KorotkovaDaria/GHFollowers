@@ -14,18 +14,19 @@ enum ItemInfoType {
 class GFItemInfoView: UIView {
     
     let symbolImageView = UIImageView()
-    let titleLabel = GFTitleLabel(textAligment: .left, fontSize: 14)
-    let countLabel = GFTitleLabel(textAligment: .center, fontSize: 14)
+    let titleLabel      = GFTitleLabel(textAligment: .left, fontSize: 14)
+    let countLabel      = GFTitleLabel(textAligment: .center, fontSize: 14)
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        configure()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func cinfigure() {
+    private func configure() {
         addSubview(symbolImageView)
         addSubview(titleLabel)
         addSubview(countLabel)
@@ -52,12 +53,11 @@ class GFItemInfoView: UIView {
         ])
     }
     
-    func set(iteminfoType: ItemInfoType, withCount count: Int) {
-        switch iteminfoType {
+    func set(itemInfoType: ItemInfoType, withCount count: Int) {
+        switch itemInfoType {
         case .repos:
             symbolImageView.image = UIImage(systemName: Resources.SFSymbols.repos)
             titleLabel.text = "Public Repos"
-            countLabel.text = "\(count)"
         case .gists:
             symbolImageView.image = UIImage(systemName: Resources.SFSymbols.gists)
             titleLabel.text = "Public Gists"

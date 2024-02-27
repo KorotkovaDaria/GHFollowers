@@ -7,6 +7,10 @@
 
 import UIKit
 
+protocol FollowerListVCDelegate: AnyObject {
+    func didRequestFollowers(for username: String)
+}
+
 class FollowerListVC: UIViewController {
     //MARK: - Enum
     enum Section { case main }
@@ -38,6 +42,8 @@ class FollowerListVC: UIViewController {
     func configureViewController() {
         view.backgroundColor = .systemBackground
         navigationController?.navigationBar.prefersLargeTitles = true
+        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addButtonTapped))
+        navigationItem.rightBarButtonItem = addButton
     }
     
     func configureCollectionView() {
@@ -94,6 +100,33 @@ class FollowerListVC: UIViewController {
         DispatchQueue.main.async { self.dataSourse.apply(snapshot, animatingDifferences: true) }
         
     }
+    
+    @objc func addButtonTapped() {
+        NetworkManager.shared.getUserInfo(for: username) { [ weak self ] result in
+            guard let self = self else { return }
+            self.dismissLoadingView()
+            
+            switch result {
+            case.success(let user):
+                let favorite = Follower(login: user.login, avatarUrl: user.avatarUrl)
+                
+                PresistenceManager.updateWith(favorite: favorite, actionType: .add) { [weak self] error in
+                    guard let self = self else { return }
+                    
+                    guard let error = error else {
+                        self.presentGFAlertOnMainThread(title: "Success!", messeage: "You have successfully favorited this user 🎉", buttonTitle: "Hooray!")
+                        return
+                    }
+                    
+                    self.presentGFAlertOnMainThread(title: "Something went wrong", messeage: error.rawValue, buttonTitle: "OK")
+                }
+                
+                
+            case.failure(let error):
+                self.presentGFAlertOnMainThread(title: "Something went wrong", messeage: error.rawValue, buttonTitle: "OK")
+            }
+        }
+    }
 }
 //MARK: - Extension
 extension FollowerListVC: UICollectionViewDelegate {
@@ -115,6 +148,7 @@ extension FollowerListVC: UICollectionViewDelegate {
         
         let destVC = UserInfoVC()
         destVC.username = follower.login
+        destVC.delegate = self
         let navController = UINavigationController(rootViewController: destVC)
         present(navController, animated: true)
         
@@ -133,5 +167,17 @@ extension FollowerListVC: UISearchResultsUpdating, UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         isSearching = false
         updateData(on: followers)
+    }
+}
+
+extension FollowerListVC: FollowerListVCDelegate {
+    func didRequestFollowers(for username: String) {
+        self.username = username
+        title = username
+        page = 1
+        followers.removeAll()
+        filteredFollowers.removeAll()
+        collectionView.setContentOffset(.zero, animated: true)
+        getFollowes(usermane: username, page: page)
     }
 }
