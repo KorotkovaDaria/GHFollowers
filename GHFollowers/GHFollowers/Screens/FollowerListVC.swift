@@ -11,7 +11,7 @@ protocol FollowerListVCDelegate: AnyObject {
     func didRequestFollowers(for username: String)
 }
 
-class FollowerListVC: UIViewController {
+class FollowerListVC: GFDataLoadingVC {
     //MARK: - Enum
     enum Section { case main }
     //MARK: - Property
@@ -24,6 +24,17 @@ class FollowerListVC: UIViewController {
     
     var collectionView: UICollectionView!
     var dataSourse: UICollectionViewDiffableDataSource<Section, Follower>!
+    
+    init (username: String) {
+        super.init(nibName: nil, bundle: nil)
+        self.username = username
+        title = username
+        
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     //MARK: - Life cycle view controller
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -102,6 +113,7 @@ class FollowerListVC: UIViewController {
     }
     
     @objc func addButtonTapped() {
+        showLoadingView()
         NetworkManager.shared.getUserInfo(for: username) { [ weak self ] result in
             guard let self = self else { return }
             self.dismissLoadingView()
@@ -120,7 +132,6 @@ class FollowerListVC: UIViewController {
                     
                     self.presentGFAlertOnMainThread(title: "Something went wrong", messeage: error.rawValue, buttonTitle: "OK")
                 }
-                
                 
             case.failure(let error):
                 self.presentGFAlertOnMainThread(title: "Something went wrong", messeage: error.rawValue, buttonTitle: "OK")
